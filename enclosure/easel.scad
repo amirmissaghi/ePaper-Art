@@ -170,6 +170,12 @@ module front_frame() {
 module back_shell() {
     shell_d = back_d + wall;
 
+    // ESP32 positioned in upper half — clear of ribbon area
+    bracket_h = 9.0;       // Slightly taller (+1mm)
+    bracket_t = 2.5;       // Slightly thicker (+0.5mm)
+    esp_x = (frame_w - esp_w) / 2;  // Centered horizontally
+    esp_y = frame_h * 0.5;          // Upper half of shell
+
     difference() {
         // Outer shell
         rrect(frame_w, frame_h, shell_d, corner_r);
@@ -179,24 +185,27 @@ module back_shell() {
             rrect(frame_w - wall*2, frame_h - wall*2, shell_d, corner_r - 0.5);
 
         // ── Ribbon cable slot (bottom center) ──
+        // Now clear — ESP32 is up top
         translate([(frame_w - ribbon_w) / 2, -0.1, wall + 1])
             cube([ribbon_w, wall + 0.2, ribbon_h + 1]);
 
-        // ── USB cable slot (bottom, offset left) ──
-        translate([frame_w * 0.12, -0.1, wall + ribbon_h + 3])
+        // ── USB cable slot (bottom, centered on ESP32) ──
+        // Aligned with ESP32's USB port (centered X)
+        // Cable routes up inside the shell to the ESP32
+        usb_slot_x = (frame_w - usb_w - 4) / 2;
+        translate([usb_slot_x, -0.1, wall + ribbon_h + 3])
             cube([usb_w + 4, wall + 0.2, usb_h + 2]);
 
-        // ── Vent slots behind ESP32 area ──
-        vent_y = wall + 8;  // Near bottom where ESP32 sits
+        // ── Vent slots behind ESP32 (upper area) ──
         for (i = [0:2]) {
-            translate([frame_w * 0.25, vent_y + i * 10, -0.1])
-                cube([frame_w * 0.5, 1.5, wall + 0.2]);
+            translate([frame_w * 0.2, esp_y + 2 + i * 10, -0.1])
+                cube([frame_w * 0.6, 1.5, wall + 0.2]);
         }
 
-        // ── Additional vent slots on back (upper area) ──
-        for (i = [0:2]) {
-            translate([frame_w * 0.2, frame_h * 0.5 + i * 15, -0.1])
-                cube([frame_w * 0.6, 1.2, wall + 0.2]);
+        // ── Lower vent slots (general airflow) ──
+        for (i = [0:1]) {
+            translate([frame_w * 0.25, wall + 12 + i * 14, -0.1])
+                cube([frame_w * 0.5, 1.2, wall + 0.2]);
         }
     }
 
@@ -214,15 +223,7 @@ module back_shell() {
                       lip_h + 0.2, corner_r - 1.0);
         }
 
-    // ── ESP32 wall brackets ──
-    // Simple L-shaped walls instead of thin posts
-    // ESP32 positioned near bottom for short USB cable run
-    bracket_h = 8.0;
-    bracket_t = 2.0;
-
-    esp_x = (frame_w - esp_w) / 2;
-    esp_y = wall + 5;
-
+    // ── ESP32 wall brackets (upper half) ──
     // Left bracket wall
     translate([esp_x - bracket_t, esp_y - 1, wall])
         cube([bracket_t, esp_h + 2, bracket_h]);
@@ -231,11 +232,11 @@ module back_shell() {
     translate([esp_x + esp_w, esp_y - 1, wall])
         cube([bracket_t, esp_h + 2, bracket_h]);
 
-    // Bottom bracket wall (back stop)
+    // Bottom bracket wall (between ESP32 and ribbon area)
     translate([esp_x, esp_y - bracket_t, wall])
         cube([esp_w, bracket_t, bracket_h]);
 
-    // Top bracket wall (with gap for wires)
+    // Top bracket wall (with gap in center for wires)
     translate([esp_x, esp_y + esp_h, wall])
         cube([esp_w * 0.3, bracket_t, bracket_h]);
     translate([esp_x + esp_w * 0.7, esp_y + esp_h, wall])
