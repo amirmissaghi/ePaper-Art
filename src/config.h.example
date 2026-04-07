@@ -1,0 +1,32 @@
+// ePaper Art Device — Configuration
+// Copy this file to config.h and fill in your values.
+
+#pragma once
+
+// ─── WiFi ─────────────────────────────────────────────
+#define WIFI_SSID     "YOUR_WIFI_SSID"
+#define WIFI_PASSWORD "YOUR_WIFI_PASSWORD"
+
+// ─── Location (for weather & time) ────────────────────
+#define LOCATION_LAT  44.89
+#define LOCATION_LON  -93.35
+#define TIMEZONE_OFFSET_SEC  -18000  // CDT = UTC-5 = -18000
+
+// ─── Display Pin Mapping (ESP32 → Waveshare 4.2" V2) ─
+#define EPD_CS    5
+#define EPD_DC    17
+#define EPD_RST   16
+#define EPD_BUSY  4
+// MOSI = GPIO 23 (hardware SPI default)
+// SCK  = GPIO 18 (hardware SPI default)
+
+// ─── Display Dimensions ───────────────────────────────
+#define SCREEN_W  300
+#define SCREEN_H  400
+
+// ─── Mode Cycling ─────────────────────────────────────
+#define MODE_CYCLE_INTERVAL_MS  600000   // 10 minutes in milliseconds
+
+// ─── Animation ────────────────────────────────────────
+#define ANIM_DEFAULT_BATCH_SIZE  8
+#define ANIM_DEFAULT_DELAY_MS    80
