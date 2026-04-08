@@ -233,20 +233,40 @@ module back_shell() {
         }
 
     // ── ESP32 wall brackets (upper half) ──
-    // Left bracket
+    // Left bracket (long side — solid)
     translate([esp_x - bracket_t, esp_y - 1, wall])
         cube([bracket_t, esp_h + 2, bracket_h]);
-    // Right bracket
+    // Right bracket (long side — solid)
     translate([esp_x + esp_w, esp_y - 1, wall])
         cube([bracket_t, esp_h + 2, bracket_h]);
-    // Bottom bracket (solid wall between ESP32 and wire area)
+
+    // Bottom bracket — split with USB cable gap in center
+    usb_gap = 12.0;  // Wide enough for micro USB cable
+    bot_half = (esp_w - usb_gap) / 2;
     translate([esp_x, esp_y - bracket_t, wall])
-        cube([esp_w, bracket_t, bracket_h]);
-    // Top bracket (with center gap for wires to ESP32 pins)
+        cube([bot_half, bracket_t, bracket_h]);
+    translate([esp_x + esp_w - bot_half, esp_y - bracket_t, wall])
+        cube([bot_half, bracket_t, bracket_h]);
+
+    // Top bracket — split with USB cable gap in center
     translate([esp_x, esp_y + esp_h, wall])
-        cube([esp_w * 0.3, bracket_t, bracket_h]);
-    translate([esp_x + esp_w * 0.7, esp_y + esp_h, wall])
-        cube([esp_w * 0.3, bracket_t, bracket_h]);
+        cube([bot_half, bracket_t, bracket_h]);
+    translate([esp_x + esp_w - bot_half, esp_y + esp_h, wall])
+        cube([bot_half, bracket_t, bracket_h]);
+
+    // ── Corner feet (4mm square, 6mm tall) ──
+    // Lift ESP32 off back wall for airflow underneath
+    foot = 4.0;
+    foot_h = 6.0;
+    // Four feet at ESP32 corners
+    translate([esp_x, esp_y, wall])
+        cube([foot, foot, foot_h]);
+    translate([esp_x + esp_w - foot, esp_y, wall])
+        cube([foot, foot, foot_h]);
+    translate([esp_x, esp_y + esp_h - foot, wall])
+        cube([foot, foot, foot_h]);
+    translate([esp_x + esp_w - foot, esp_y + esp_h - foot, wall])
+        cube([foot, foot, foot_h]);
 }
 
 // ═══════════════════════════════════════════════════════════
