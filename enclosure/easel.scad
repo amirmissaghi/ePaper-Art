@@ -233,15 +233,22 @@ module back_shell() {
         }
 
     // ── ESP32 wall brackets (upper half) ──
-    // Left bracket (long side — solid)
-    translate([esp_x - bracket_t, esp_y - 1, wall])
-        cube([bracket_t, esp_h + 2, bracket_h]);
-    // Right bracket (long side — solid)
-    translate([esp_x + esp_w, esp_y - 1, wall])
-        cube([bracket_t, esp_h + 2, bracket_h]);
-
-    // Bottom bracket — split with USB cable gap in center
     usb_gap = 12.0;  // Wide enough for micro USB cable
+
+    // Left bracket (long side — split with cable gap)
+    side_half = (esp_h + 2 - usb_gap) / 2;
+    translate([esp_x - bracket_t, esp_y - 1, wall])
+        cube([bracket_t, side_half, bracket_h]);
+    translate([esp_x - bracket_t, esp_y - 1 + esp_h + 2 - side_half, wall])
+        cube([bracket_t, side_half, bracket_h]);
+
+    // Right bracket (long side — split with cable gap)
+    translate([esp_x + esp_w, esp_y - 1, wall])
+        cube([bracket_t, side_half, bracket_h]);
+    translate([esp_x + esp_w, esp_y - 1 + esp_h + 2 - side_half, wall])
+        cube([bracket_t, side_half, bracket_h]);
+
+    // Bottom bracket — split with cable gap in center
     bot_half = (esp_w - usb_gap) / 2;
     translate([esp_x, esp_y - bracket_t, wall])
         cube([bot_half, bracket_t, bracket_h]);
