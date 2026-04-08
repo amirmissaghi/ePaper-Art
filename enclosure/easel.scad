@@ -216,6 +216,12 @@ module back_shell() {
             translate([frame_w * 0.25, wall + 15 + i * 14, -0.1])
                 cube([frame_w * 0.5, 1.2, wall + 0.2]);
         }
+
+        // ── Ribbon pass-through slot ──
+        // FPC ribbon loops out the bottom harness and back up through here
+        // Wider/taller than vents so the flat cable can pass through
+        translate([frame_w * 0.15, wall + 42, -0.1])
+            cube([frame_w * 0.7, 4.0, wall + 0.2]);
     }
 
     // ── Snap-fit lip ──
