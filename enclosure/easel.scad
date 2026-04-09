@@ -63,7 +63,7 @@ win_h      = disp_h - overlap * 2;               // 82.8mm
 
 // Frame outer dimensions
 frame_w    = bezel_left + win_w + bezel_right;    // 89mm
-frame_h    = bezel_bottom + win_h + bezel_top;    // 118.8mm
+// frame_h computed below after pcb_y is known
 
 // Window position
 win_x      = bezel_left;                          // 12mm from left
@@ -73,12 +73,21 @@ win_y      = bezel_bottom;                        // 23mm from bottom
 pcb_x      = win_x + overlap - dead_left;         // 3mm from left
 pcb_y      = win_y + overlap - (pcb_h - disp_h)/2; // ~14.9mm from bottom
 
-// PCB pocket — 5% oversize for adjustment play (~2mm per side)
+// Frame height: must be tall enough for PCB + wall on all sides
+// pcb_top = pcb_y + pcb_h ≈ 117.9mm, needs wall+1 above = 120.9
+// Round up to 122 for clean proportions
+frame_h    = max(bezel_bottom + win_h + bezel_top,
+                 pcb_y + pcb_h + wall + 1);        // ~122mm
+
+// PCB pocket — 5% oversize for adjustment play
+// CLAMPED to stay within frame walls on ALL sides
 pocket_tol = 2.0;
-pocket_x   = pcb_x - pocket_tol;
-pocket_y   = pcb_y - pocket_tol;
-pocket_w   = pcb_w + pocket_tol * 2;
-pocket_h   = pcb_h + pocket_tol * 2;
+pocket_x   = max(wall, pcb_x - pocket_tol);        // ≥ 2mm from left
+pocket_y   = max(wall, pcb_y - pocket_tol);         // ≥ 2mm from bottom
+pocket_r   = min(frame_w - wall, pcb_x + pcb_w + pocket_tol); // ≤ frame-wall from right
+pocket_t   = min(frame_h - wall, pcb_y + pcb_h + pocket_tol); // ≤ frame-wall from top
+pocket_w   = pocket_r - pocket_x;
+pocket_h   = pocket_t - pocket_y;
 
 // Frame depths
 front_d    = wall + glass_d + pcb_d + 0.5;        // ~5.3mm
