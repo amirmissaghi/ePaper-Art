@@ -314,15 +314,11 @@ module easel_front() {
             translate([0, 0, shelf_h])
                 cube([bottom_spread, leg_section, shelf_thick]);
 
-            // Shelf lip (frame rests on this)
+            // Shelf tray (frame rests on this)
             translate([0, -shelf_lip, shelf_h])
                 cube([bottom_spread,
                       shelf_lip + leg_section,
-                      shelf_thick / 2]);
-
-            // Front lip ridge (prevents sliding)
-            translate([0, -shelf_lip, shelf_h])
-                cube([bottom_spread, 2.5, shelf_thick + 4]);
+                      shelf_thick]);
 
             // Top crossbar
             translate([top_x_left, 0, leg_height - leg_section])
