@@ -112,7 +112,7 @@ bottom_spread  = 85.0;
 top_spread     = 24.0;
 shelf_h        = 12.0;
 shelf_lip      = 9.0;        // Extended lip
-shelf_thick    = 3.5;
+shelf_thick    = 2.5;
 
 back_leg_len   = 105.0;
 back_leg_w     = 10.0;
