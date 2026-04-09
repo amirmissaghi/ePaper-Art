@@ -188,18 +188,26 @@ module front_frame() {
 module back_shell() {
     shell_d = back_d + wall;
 
-    // ESP32 position (upper half, clear of cable area)
+    // Vent layout: 6 evenly spaced, all 4mm tall
+    vent_count  = 6;
+    vent_h      = 4.0;
+    vent_margin = 10.0;
+    vent_range  = frame_h - vent_margin * 2;
+    vent_spacing = vent_range / (vent_count - 1);
+
+    // ESP32 position: CENTER it on vent slot #3 (0-indexed)
+    // so one vent is directly behind the chip
+    vent3_y     = vent_margin + 3 * vent_spacing;
+    esp_center_y = vent3_y + vent_h / 2;
+    esp_x = (frame_w - esp_w) / 2;
+    esp_y = esp_center_y - esp_h / 2;
+
     bracket_h = 9.0;
     bracket_t = 2.5;
-    esp_x = (frame_w - esp_w) / 2;
-    esp_y = frame_h * 0.55;
 
-    // Vent layout: evenly spaced, all 4mm tall
-    vent_count = 6;
-    vent_h     = 4.0;
-    vent_margin = 10.0;  // Distance from top/bottom edges
-    vent_range = frame_h - vent_margin * 2;
-    vent_spacing = vent_range / (vent_count - 1);
+    // ESP32 corner feet dimensions
+    foot   = 4.0;
+    foot_h = 3.0;
 
     difference() {
         // Outer shell
@@ -211,16 +219,25 @@ module back_shell() {
                   shell_d, corner_r - 0.5);
 
         // ── Evenly spaced vents (all same size) ──
+        // Vent #3 is directly behind ESP32 center
+        // That vent is narrower to avoid cutting under the feet
         for (i = [0 : vent_count - 1]) {
             vy = vent_margin + i * vent_spacing;
-            translate([frame_w * 0.15, vy, -0.1])
-                cube([frame_w * 0.7, vent_h, wall + 0.2]);
+            if (i == 3) {
+                // ESP32 vent — narrower, fits between the feet
+                // Feet are at esp_x and esp_x+esp_w-foot
+                // Vent goes from foot right edge to next foot left edge
+                translate([esp_x + foot + 1, vy, -0.1])
+                    cube([esp_w - foot*2 - 2, vent_h, wall + 0.2]);
+            } else {
+                // Standard full-width vent
+                translate([frame_w * 0.15, vy, -0.1])
+                    cube([frame_w * 0.7, vent_h, wall + 0.2]);
+            }
         }
     }
 
     // ── Friction-fit perimeter ridge ──
-    // This ridge inserts into the front frame's pocket opening
-    // Slight interference fit for a firm press-fit connection
     translate([wall + fit_tol, wall + fit_tol, shell_d - fit_lip_h])
         difference() {
             rrect(frame_w - wall*2 - fit_tol*2,
@@ -265,9 +282,10 @@ module back_shell() {
                esp_y + esp_h, wall])
         cube([bot_half, bracket_t, bracket_h]);
 
-    // ── ESP32 corner feet (3mm tall — 50% reduction) ──
-    foot = 4.0;
-    foot_h = 3.0;
+    // ── ESP32 corner feet (3mm tall) ──
+    // Attached to back plate (z=wall = inner surface of back wall)
+    // Positioned at corners AWAY from the center vent
+    // so they rest on solid back plate, not over the vent slot
     translate([esp_x, esp_y, wall])
         cube([foot, foot, foot_h]);
     translate([esp_x + esp_w - foot, esp_y, wall])
