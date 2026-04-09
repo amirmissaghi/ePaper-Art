@@ -1,10 +1,23 @@
-// ePaper Art Device — Portrait Easel Enclosure v3
-// Parametric OpenSCAD for FDM 3D printing
+// ePaper Art Device — Portrait Easel Enclosure v4
+// Parametric OpenSCAD for FDM 3D printing — NO SUPPORTS NEEDED
 //
-// PORTRAIT orientation — taller than wide
-// Ribbon / wire harness exits BOTTOM
-// Even 11mm bezel on L/R, ~12.5mm on T/B
-// PCB offset inside: 10mm dead space on left
+// v4 CHANGES:
+//  1. Chin-side bezel +1mm (left=12mm, right=11mm), play for adjustment
+//  2. PCB pocket 5% larger — user can slide display before gluing
+//  3. Four corner feet in front frame for even display seating
+//  4. Bottom extended 10mm — cables route inside, no external harness holes
+//  5. ESP32 feet reduced 50% (3mm)
+//  6. All vents uniform 4mm size, evenly spaced top-to-bottom
+//  7. Friction-fit perimeter ridge joins front+back
+//  8. Cross-slot joint connects back leg to A-frame
+//  9. Easel shelf lip extended +2mm
+// 10. All parts print flat, no supports required
+//
+// Print orientations:
+//   front_frame   → face DOWN (flat)
+//   back_shell    → open side UP (flat bottom)
+//   easel_front   → lying on BACK (flat)
+//   easel_back    → flat
 //
 // ═══════════════════════════════════════════════════════════
 
@@ -14,19 +27,15 @@ $fn = 40;
 //  HARDWARE DIMENSIONS
 // ───────────────────────────────────────────
 
-// Waveshare 4.2" module — PORTRAIT (ribbon at bottom)
-pcb_w      = 78.5;         // Shorter side (bottom, ribbon here)
-pcb_h      = 103.0;        // Longer side (portrait tall)
-pcb_d      = 1.6;          // PCB thickness
-glass_d    = 1.2;          // Glass above PCB
+pcb_w      = 78.5;          // Display module width
+pcb_h      = 103.0;         // Display module height
+pcb_d      = 1.6;           // PCB thickness
+glass_d    = 1.2;           // E-ink glass above PCB
 
-// Display active area (portrait)
-disp_w     = 68.0;         // Active width
-disp_h     = 84.8;         // Active height
-dead_left  = 10.0;         // Left dead space (internal wiring)
-// Right dead: pcb_w - dead_left - disp_w = 0.5mm
+disp_w     = 68.0;          // Active display width
+disp_h     = 84.8;          // Active display height
+dead_left  = 10.0;          // Left dead space (chin side, internal wiring)
 
-// ESP32 DevKit V1
 esp_w      = 52.0;
 esp_h      = 28.0;
 esp_d      = 10.0;
@@ -38,56 +47,47 @@ usb_h      = 3.5;
 // ───────────────────────────────────────────
 
 wall       = 2.0;
-tol        = 0.3;
 corner_r   = 2.5;
-overlap    = 1.0;          // Bezel overlaps display glass edge
+overlap    = 1.0;
 
-// Bezel: 11mm on L and R sides
-bezel_lr   = 11.0;
+// Bezels — asymmetric left (chin) vs right, bottom extended
+bezel_left   = 12.0;        // Chin side — +1mm to hide non-functional border
+bezel_right  = 11.0;
+bezel_top    = 13.0;
+bottom_extra = 10.0;        // Extra at bottom for internal cable routing
+bezel_bottom = 13.0 + bottom_extra;  // = 23mm (thicker bottom bezel)
 
-// Window (visible display opening)
-win_w      = disp_w - overlap * 2;          // 66mm
-win_h      = disp_h - overlap * 2;          // 82.8mm
+// Display window
+win_w      = disp_w - overlap * 2;               // 66mm
+win_h      = disp_h - overlap * 2;               // 82.8mm
 
-// Frame outer width: window + 11mm bezel each side
-frame_w    = win_w + bezel_lr * 2;          // 88mm
+// Frame outer dimensions
+frame_w    = bezel_left + win_w + bezel_right;    // 89mm
+frame_h    = bezel_bottom + win_h + bezel_top;    // 118.8mm
 
-// PCB position inside frame (X axis)
-// Display left in frame = bezel_lr + overlap = 12mm
-// Display left on PCB = dead_left = 10mm
-// So PCB left = 12 - 10 = 2mm from frame left
-pcb_x      = bezel_lr + overlap - dead_left;  // 2mm
+// Window position
+win_x      = bezel_left;                          // 12mm from left
+win_y      = bezel_bottom;                        // 23mm from bottom
 
-// Frame height: center PCB vertically with even T/B bezels
-// Display is centered on PCB: dead_top = (pcb_h - disp_h)/2 = 9.1mm
-dead_tb    = (pcb_h - disp_h) / 2;           // 9.1mm
+// PCB nominal position (display centered on window)
+pcb_x      = win_x + overlap - dead_left;         // 3mm from left
+pcb_y      = win_y + overlap - (pcb_h - disp_h)/2; // ~14.9mm from bottom
 
-// PCB vertical position: centered in frame
-// For even bezels, pcb_y such that display is centered
-// display_bottom = pcb_y + dead_tb
-// window_bottom = display_bottom + overlap
-// bezel_bottom = window_bottom
-// frame_h = window_bottom + win_h + bezel_bottom
-// → frame_h = 2 * (pcb_y + dead_tb + overlap) + win_h
-// For pcb_y = wall + tol = 2.3:
-//   bezel_tb = 2.3 + 9.1 + 1 = 12.4mm
-//   frame_h = 12.4 + 82.8 + 12.4 = 107.6 → 108mm
-
-pcb_y      = 2.5;                             // Slight spacing from bottom
-bezel_tb   = pcb_y + dead_tb + overlap;       // ~12.6mm
-frame_h    = bezel_tb * 2 + win_h;            // ~108mm
-
-// Window position (centered by construction)
-win_x      = bezel_lr;                        // 11mm from left
-win_y      = bezel_tb;                        // ~12.6mm from bottom
+// PCB pocket — 5% oversize for adjustment play (~2mm per side)
+pocket_tol = 2.0;
+pocket_x   = pcb_x - pocket_tol;
+pocket_y   = pcb_y - pocket_tol;
+pocket_w   = pcb_w + pocket_tol * 2;
+pocket_h   = pcb_h + pocket_tol * 2;
 
 // Frame depths
-front_d    = wall + glass_d + pcb_d + 0.5;    // ~5.3mm
-back_d     = 14.0;                            // Interior for ESP32 + wiring
+front_d    = wall + glass_d + pcb_d + 0.5;        // ~5.3mm
+back_d     = 14.0;                                 // Interior depth
 
-// Wire harness slot (bottom edge)
-harness_w  = 35.0;         // Wide enough for ribbon + jumper wires
-harness_h  = 5.0;          // Slot height
+// Friction-fit lip dimensions
+fit_lip_h  = 2.0;           // Height of friction ridge
+fit_lip_t  = 0.8;           // Thickness of ridge wall
+fit_tol    = 0.1;           // Interference (tight fit)
 
 // ───────────────────────────────────────────
 //  RENDER CONTROL
@@ -99,18 +99,19 @@ render_part = "all";
 //  EASEL PARAMETERS
 // ───────────────────────────────────────────
 leg_section    = 5.0;
-leg_height     = 130.0;
-bottom_spread  = 82.0;     // Wider than frame for stability
-top_spread     = 22.0;
+leg_height     = 135.0;
+bottom_spread  = 85.0;       // Wider than frame for stability
+top_spread     = 24.0;
 shelf_h        = 12.0;
-shelf_lip      = 7.0;
-shelf_thick    = 3.0;
+shelf_lip      = 9.0;        // +2mm from v3 (was 7mm)
+shelf_thick    = 3.5;
 
 back_leg_len   = 100.0;
-back_leg_w     = 8.0;
+back_leg_w     = 10.0;       // Slightly wider for cross-slot strength
 back_leg_d     = 4.0;
-peg_r          = 2.5;
-peg_len        = 8.0;
+
+// Cross-slot joint dimensions
+slot_tol       = 0.3;        // Tolerance for cross-slot fit
 
 // ═══════════════════════════════════════════════════════════
 //  UTILITY
@@ -129,68 +130,76 @@ module rrect(w, h, d, r) {
 //  1. FRONT FRAME
 // ═══════════════════════════════════════════════════════════
 //
-//  Portrait rectangle — taller than wide
-//  Even 11mm bezel on L/R, ~12.5mm on T/B
-//  Wire harness slot at bottom edge
+//  • Chin (left) bezel = 12mm, right = 11mm
+//  • PCB pocket 5% oversize for adjustment play
+//  • 4 corner feet for even display seating
+//  • Bottom extended 10mm (cables route inside)
+//  • No external harness holes
+//  • Prints face DOWN, no supports
 //
 module front_frame() {
     difference() {
         // Solid frame body
         rrect(frame_w, frame_h, front_d, corner_r);
 
-        // Display window (centered on display, NOT on PCB)
+        // Display window — centered on active area
         translate([win_x, win_y, -0.1])
             rrect(win_w, win_h, front_d + 0.2, 1.5);
 
-        // PCB pocket (from the back)
-        translate([pcb_x - tol, pcb_y - tol, wall])
-            cube([pcb_w + tol * 2, pcb_h + tol * 2, front_d]);
-
-        // Wire harness slot at bottom (ribbon + jumpers exit here)
-        translate([(frame_w - harness_w) / 2, -0.1, wall])
-            cube([harness_w, wall + pcb_y + 0.2, harness_h]);
+        // PCB pocket — 5% oversize for adjustment play
+        // User can slide display L/R up to ~2mm before gluing
+        translate([pocket_x, pocket_y, wall])
+            cube([pocket_w, pocket_h, front_d]);
     }
 
-    // Retaining clips (hold display glass down)
-    clip_h = glass_d + 0.3;
-    clip_t = 1.0;
-    clip_len = 8.0;
+    // ── Four corner feet ──
+    // Small pads so display sits equidistant from face
+    // Height = pocket depth - display module thickness
+    foot_sz = 5.0;
+    foot_h  = max(0.5, front_d - wall - glass_d - pcb_d);
 
-    // Left clips (in dead space zone)
-    translate([pcb_x + 1, pcb_y + pcb_h * 0.3, wall])
-        cube([clip_t, clip_len, clip_h]);
-    translate([pcb_x + 1, pcb_y + pcb_h * 0.65, wall])
-        cube([clip_t, clip_len, clip_h]);
-
-    // Right clips
-    translate([pcb_x + pcb_w - 1 - clip_t, pcb_y + pcb_h * 0.3, wall])
-        cube([clip_t, clip_len, clip_h]);
-    translate([pcb_x + pcb_w - 1 - clip_t, pcb_y + pcb_h * 0.65, wall])
-        cube([clip_t, clip_len, clip_h]);
-
-    // Top clips
-    translate([pcb_x + pcb_w * 0.3, pcb_y + pcb_h - 2, wall])
-        cube([clip_len, clip_t, clip_h]);
-    translate([pcb_x + pcb_w * 0.6, pcb_y + pcb_h - 2, wall])
-        cube([clip_len, clip_t, clip_h]);
+    // Bottom-left foot
+    translate([pocket_x + 2, pocket_y + 2, wall])
+        cube([foot_sz, foot_sz, foot_h]);
+    // Bottom-right foot
+    translate([pocket_x + pocket_w - foot_sz - 2, pocket_y + 2, wall])
+        cube([foot_sz, foot_sz, foot_h]);
+    // Top-left foot
+    translate([pocket_x + 2, pocket_y + pocket_h - foot_sz - 2, wall])
+        cube([foot_sz, foot_sz, foot_h]);
+    // Top-right foot
+    translate([pocket_x + pocket_w - foot_sz - 2,
+               pocket_y + pocket_h - foot_sz - 2, wall])
+        cube([foot_sz, foot_sz, foot_h]);
 }
 
 // ═══════════════════════════════════════════════════════════
 //  2. BACK SHELL
 // ═══════════════════════════════════════════════════════════
 //
-//  ESP32 in upper half (clear of wire harness area)
-//  Wire harness slot at bottom matches front frame
-//  Vents behind ESP32
+//  • Friction-fit ridge mates with front frame
+//  • ESP32 in upper half with cable gaps on all 4 walls
+//  • ESP32 corner feet reduced to 3mm (50%)
+//  • All vents uniform 4mm tall, evenly spaced
+//  • Vent behind ESP32 guaranteed
+//  • No external harness holes (cables route inside)
+//  • Prints open-side UP, no supports
 //
 module back_shell() {
     shell_d = back_d + wall;
 
-    // ESP32 in upper half
+    // ESP32 position (upper half, clear of cable area)
     bracket_h = 9.0;
     bracket_t = 2.5;
     esp_x = (frame_w - esp_w) / 2;
-    esp_y = frame_h * 0.52;
+    esp_y = frame_h * 0.55;
+
+    // Vent layout: evenly spaced, all 4mm tall
+    vent_count = 6;
+    vent_h     = 4.0;
+    vent_margin = 10.0;  // Distance from top/bottom edges
+    vent_range = frame_h - vent_margin * 2;
+    vent_spacing = vent_range / (vent_count - 1);
 
     difference() {
         // Outer shell
@@ -198,80 +207,67 @@ module back_shell() {
 
         // Hollow interior
         translate([wall, wall, wall])
-            rrect(frame_w - wall*2, frame_h - wall*2, shell_d, corner_r - 0.5);
+            rrect(frame_w - wall*2, frame_h - wall*2,
+                  shell_d, corner_r - 0.5);
 
-        // ── Wire harness slot at bottom ──
-        // Matches front frame — ribbon + jumper wires + USB all exit here
-        translate([(frame_w - harness_w) / 2, -0.1, wall])
-            cube([harness_w, wall + 0.2, harness_h]);
-
-        // ── Vent slots behind ESP32 ──
-        for (i = [0:2]) {
-            translate([frame_w * 0.2, esp_y + 2 + i * 10, -0.1])
-                cube([frame_w * 0.6, 1.5, wall + 0.2]);
+        // ── Evenly spaced vents (all same size) ──
+        for (i = [0 : vent_count - 1]) {
+            vy = vent_margin + i * vent_spacing;
+            translate([frame_w * 0.15, vy, -0.1])
+                cube([frame_w * 0.7, vent_h, wall + 0.2]);
         }
-
-        // ── Lower area vents ──
-        for (i = [0:1]) {
-            translate([frame_w * 0.25, wall + 15 + i * 14, -0.1])
-                cube([frame_w * 0.5, 1.2, wall + 0.2]);
-        }
-
-        // ── Ribbon pass-through slot ──
-        // FPC ribbon loops out the bottom harness and back up through here
-        // Wider/taller than vents so the flat cable can pass through
-        translate([frame_w * 0.15, wall + 42, -0.1])
-            cube([frame_w * 0.7, 4.0, wall + 0.2]);
     }
 
-    // ── Snap-fit lip ──
-    lip_h = 1.5;
-    lip_t = 0.8;
-    translate([wall - lip_t/2, wall - lip_t/2, shell_d - lip_h])
+    // ── Friction-fit perimeter ridge ──
+    // This ridge inserts into the front frame's pocket opening
+    // Slight interference fit for a firm press-fit connection
+    translate([wall + fit_tol, wall + fit_tol, shell_d - fit_lip_h])
         difference() {
-            rrect(frame_w - wall*2 + lip_t,
-                  frame_h - wall*2 + lip_t,
-                  lip_h, corner_r - 0.5);
-            translate([lip_t, lip_t, -0.1])
-                rrect(frame_w - wall*2 - lip_t,
-                      frame_h - wall*2 - lip_t,
-                      lip_h + 0.2, corner_r - 1.0);
+            rrect(frame_w - wall*2 - fit_tol*2,
+                  frame_h - wall*2 - fit_tol*2,
+                  fit_lip_h, corner_r - 0.5);
+            translate([fit_lip_t, fit_lip_t, -0.1])
+                rrect(frame_w - wall*2 - fit_tol*2 - fit_lip_t*2,
+                      frame_h - wall*2 - fit_tol*2 - fit_lip_t*2,
+                      fit_lip_h + 0.2, corner_r - 1.0);
         }
 
-    // ── ESP32 wall brackets (upper half) ──
-    usb_gap = 12.0;  // Wide enough for micro USB cable
+    // ── ESP32 wall brackets ──
+    usb_gap = 12.0;
 
-    // Left bracket (long side — split with cable gap)
+    // Left bracket (split with cable gap)
     side_half = (esp_h + 2 - usb_gap) / 2;
     translate([esp_x - bracket_t, esp_y - 1, wall])
         cube([bracket_t, side_half, bracket_h]);
-    translate([esp_x - bracket_t, esp_y - 1 + esp_h + 2 - side_half, wall])
+    translate([esp_x - bracket_t,
+               esp_y - 1 + esp_h + 2 - side_half, wall])
         cube([bracket_t, side_half, bracket_h]);
 
-    // Right bracket (long side — split with cable gap)
+    // Right bracket (split with cable gap)
     translate([esp_x + esp_w, esp_y - 1, wall])
         cube([bracket_t, side_half, bracket_h]);
-    translate([esp_x + esp_w, esp_y - 1 + esp_h + 2 - side_half, wall])
+    translate([esp_x + esp_w,
+               esp_y - 1 + esp_h + 2 - side_half, wall])
         cube([bracket_t, side_half, bracket_h]);
 
-    // Bottom bracket — split with cable gap in center
+    // Bottom bracket (split with cable gap)
     bot_half = (esp_w - usb_gap) / 2;
     translate([esp_x, esp_y - bracket_t, wall])
         cube([bot_half, bracket_t, bracket_h]);
-    translate([esp_x + esp_w - bot_half, esp_y - bracket_t, wall])
+    translate([esp_x + esp_w - bot_half,
+               esp_y - bracket_t, wall])
         cube([bot_half, bracket_t, bracket_h]);
 
-    // Top bracket — split with USB cable gap in center
+    // Top bracket (split with cable gap)
     translate([esp_x, esp_y + esp_h, wall])
         cube([bot_half, bracket_t, bracket_h]);
-    translate([esp_x + esp_w - bot_half, esp_y + esp_h, wall])
+    translate([esp_x + esp_w - bot_half,
+               esp_y + esp_h, wall])
         cube([bot_half, bracket_t, bracket_h]);
 
-    // ── Corner feet (4mm square, 6mm tall) ──
-    // Lift ESP32 off back wall for airflow underneath
+    // ── ESP32 corner feet (3mm tall — 50% reduction) ──
     foot = 4.0;
-    foot_h = 6.0;
-    // Four feet at ESP32 corners
+    foot_h = 3.0;
     translate([esp_x, esp_y, wall])
         cube([foot, foot, foot_h]);
     translate([esp_x + esp_w - foot, esp_y, wall])
@@ -285,6 +281,12 @@ module back_shell() {
 // ═══════════════════════════════════════════════════════════
 //  3a. EASEL FRONT — A-frame with shelf
 // ═══════════════════════════════════════════════════════════
+//
+//  • Two front legs converging to top crossbar
+//  • Shelf lip extended to 9mm
+//  • Cross-slot joint at top for back leg
+//  • Prints lying on BACK, no supports
+//
 
 module easel_front_leg(side) {
     bot_x = side * (bottom_spread - leg_section);
@@ -298,7 +300,9 @@ module easel_front_leg(side) {
     }
 }
 
-module easel_front_with_sockets() {
+module easel_front() {
+    top_x_left = (bottom_spread - top_spread) / 2;
+
     difference() {
         union() {
             // Two front legs
@@ -309,50 +313,64 @@ module easel_front_with_sockets() {
             translate([0, 0, shelf_h])
                 cube([bottom_spread, leg_section, shelf_thick]);
 
-            // Shelf lip (extends forward, holds frame)
+            // Shelf lip (extends forward — frame rests on this)
             translate([0, -shelf_lip, shelf_h])
-                cube([bottom_spread, shelf_lip + leg_section,
+                cube([bottom_spread,
+                      shelf_lip + leg_section,
                       shelf_thick / 2]);
 
-            // Front lip ridge (prevents frame from sliding)
+            // Front lip ridge (prevents frame from sliding off)
             translate([0, -shelf_lip, shelf_h])
-                cube([bottom_spread, 2, shelf_thick + 3]);
+                cube([bottom_spread, 2.5, shelf_thick + 4]);
 
             // Top crossbar
-            top_x_left = (bottom_spread - top_spread) / 2;
             translate([top_x_left, 0, leg_height - leg_section])
                 cube([top_spread, leg_section, leg_section]);
         }
 
-        // Peg socket for back leg
-        translate([bottom_spread / 2, leg_section / 2,
-                   leg_height - leg_section / 2])
-            cylinder(h = peg_len + 0.5, r = peg_r + 0.2);
+        // ── Cross-slot: cut from TOP of crossbar ──
+        // Slot goes halfway down for interlocking with back leg
+        slot_w = back_leg_d + slot_tol;
+        slot_depth = leg_section / 2 + 0.5;
+        translate([top_x_left + (top_spread - slot_w) / 2,
+                   -0.1,
+                   leg_height - slot_depth])
+            cube([slot_w, leg_section + 0.2, slot_depth + 0.1]);
     }
 }
 
 // ═══════════════════════════════════════════════════════════
-//  3b. EASEL BACK LEG
+//  3b. EASEL BACK LEG — with cross-slot tab
 // ═══════════════════════════════════════════════════════════
+//
+//  • Interlocking cross-slot at top joins to A-frame
+//  • Wider foot for stability
+//  • Prints FLAT, no supports
+//
 
 module easel_back_leg() {
-    union() {
-        // Main leg
-        rrect(back_leg_w, back_leg_len, back_leg_d, 1.5);
+    difference() {
+        union() {
+            // Main leg body
+            rrect(back_leg_w, back_leg_len, back_leg_d, 1.5);
 
-        // Peg (inserts into front A-frame)
-        translate([back_leg_w / 2, back_leg_len - 1,
-                   back_leg_d / 2])
-            rotate([-90, 0, 0])
-                cylinder(h = peg_len, r = peg_r);
-
-        // Wider foot
-        hull() {
-            translate([0, 0, 0])
-                rrect(back_leg_w, 5, back_leg_d, 1.5);
-            translate([-3, -2, 0])
-                rrect(back_leg_w + 6, 4, back_leg_d, 1.5);
+            // Wider foot at bottom
+            hull() {
+                translate([0, 0, 0])
+                    rrect(back_leg_w, 5, back_leg_d, 1.5);
+                translate([-4, -3, 0])
+                    rrect(back_leg_w + 8, 5, back_leg_d, 1.5);
+            }
         }
+
+        // ── Cross-slot: cut from TOP end (bottom of leg in print) ──
+        // Goes halfway through thickness for interlocking
+        slot_w = leg_section + slot_tol;
+        slot_depth = back_leg_d / 2 + 0.5;
+        translate([(back_leg_w - slot_w) / 2,
+                   back_leg_len - leg_section - 0.1,
+                   -0.1])
+            cube([slot_w, leg_section + 0.2, slot_depth + 0.1]);
     }
 }
 
@@ -361,33 +379,31 @@ module easel_back_leg() {
 // ═══════════════════════════════════════════════════════════
 
 module assembly() {
-    // Front frame — facing viewer
+    // Front frame — display faces viewer (XY plane)
     color("WhiteSmoke", 0.9)
         front_frame();
 
-    // Back shell — behind it
+    // Back shell — behind front frame
     translate([0, 0, -(back_d + wall)])
         color("LightGray", 0.7)
             back_shell();
 
     // Ghost display for reference
     color("DarkSlateGray", 0.3)
-        translate([pcb_x + dead_left + overlap,
-                   pcb_y + dead_tb + overlap,
-                   -0.3])
-            cube([win_w, win_h, 0.3]);
+        translate([win_x + overlap, win_y + overlap, -0.3])
+            cube([disp_w - overlap*2, disp_h - overlap*2, 0.3]);
 
     // Easel A-frame — behind and below
     easel_x = (frame_w - bottom_spread) / 2;
-    easel_z = -(back_d + wall + 2);
-    translate([easel_x, -shelf_lip, easel_z])
+    easel_z = -(back_d + wall + 3);
+    translate([easel_x, -shelf_lip + 2, easel_z])
         rotate([-8, 0, 0])
             color("BurlyWood", 0.8)
-                easel_front_with_sockets();
+                easel_front();
 
-    // Back leg
+    // Back leg — angled backward, cross-slot joined
     translate([frame_w/2 - back_leg_w/2,
-               frame_h * 0.8,
+               frame_h * 0.75,
                easel_z - 5])
         rotate([55, 0, 0])
             color("BurlyWood", 0.7)
@@ -403,7 +419,7 @@ if (render_part == "front") {
 } else if (render_part == "back") {
     back_shell();
 } else if (render_part == "easel_front") {
-    easel_front_with_sockets();
+    easel_front();
 } else if (render_part == "easel_back") {
     easel_back_leg();
 } else {
